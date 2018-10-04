@@ -10,6 +10,7 @@ namespace MineSweeper
     {
         public bool explosive;
         public bool flagged = false;
+        public bool reaveled = false;
         public int number;
         public Mine(bool expl)
         {
