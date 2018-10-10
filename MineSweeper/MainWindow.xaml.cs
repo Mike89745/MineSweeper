@@ -22,11 +22,13 @@ namespace MineSweeper
     public partial class MainWindow : Window
     {
         public Game Game = new Game();
+        public int sizeX = 10;
+        public int sizeY = 10;
         public MainWindow()
         {
             InitializeComponent();
-            GenerateGrid(10, 10);
-            Game.GenerateMineField();
+            GenerateGrid(sizeX, sizeY);
+            Game.GenerateField();
         }
 
         public void GenerateGrid(int x, int y)
@@ -48,77 +50,150 @@ namespace MineSweeper
                     MineGrid.Children.Add(MineButton);
                     Grid.SetRow(MineButton, i);
                     Grid.SetColumn(MineButton, b);
-                    MineButton.Click += RevealPoint;
-                    MineButton.MouseRightButtonUp += FlagPoint;
+                    MineButton.Click += LeftClick;
+                    MineButton.MouseRightButtonUp += RightClick;
                 }
             }
         }
-        private void RevealPoint(object sender, RoutedEventArgs e)
+        private void LeftClick(object sender, RoutedEventArgs e)
         {
-            var element = (Button)e.Source;
-
-            int x = Grid.GetColumn(element);
-            int y = Grid.GetRow(element);
-            if (!Game.MineField[x][y].explosive)
+            Button button = (Button)e.Source;
+            int x = Grid.GetColumn(button);
+            int y = Grid.GetRow(button);
+            if (!Game.generated)
             {
-                if (Game.MineField[x][y].number > 0)
+                Game.GenerateMineField(x, y);
+                RevealAround(Game.MineField[x][y], button);
+            }
+            button.Background = Brushes.Yellow;
+            Debug.WriteLine(x + " " + y);
+            Game.DebugMineField();
+            RevealPoint(Game.MineField[x][y], button);
+        }
+        private void RightClick(object sender, RoutedEventArgs e)
+        {
+            Button button = (Button)e.Source;
+            int x = Grid.GetColumn(button);
+            int y = Grid.GetRow(button);
+            Flag(Game.MineField[x][y], button);
+        }
+        public void Flag(Mine mine, Button button)
+        {
+            if (mine.flagged)
+            {
+                mine.flagged = false;
+                button.Content = " ";
+            }
+            else
+            {
+                mine.flagged = true;
+                button.Content = "F";
+            }
+        }
+        public void RevealPoint(Mine mine, Button button)
+        {
+            Debug.WriteLine(mine.explosive + " " + mine.flagged + " " + mine.number + " " + mine.reaveled);
+            if (!mine.explosive)
+            {
+                if (!mine.reaveled)
                 {
-                    element.Content = Game.MineField[x][y].number.ToString();
+                    mine.reaveled = true;
+                    if (mine.number > 0)
+                    {
+                        button.Content = mine.number.ToString();
+                      //  button.Background = Brushes.White;
+                    }
+                    else
+                    {
+                       // button.Background = Brushes.White;
+                        RevealAround(mine, button);
+                    }
                 }
             }
             else
             {
                 Game.GameOver();
                 RevealAll();
-                element.Content = "x";
+                button.Content = "x";
+                //button.Background = Brushes.Red;
             }
-            element.Foreground = setColor(Game.MineField[x][y].number);
-            element.Background = Brushes.White;
+            button.Foreground = setColor(mine.number);
         }
-        private void FlagPoint(object sender, RoutedEventArgs e)
+        public void RevealAround(Mine mine, Button button)
         {
-            var element = (Button)e.Source;
-
-            int x = Grid.GetColumn(element);
-            int y = Grid.GetRow(element);
-            if (Game.MineField[x][y].flagged)
+            int y = Grid.GetColumn(button);
+            int x = Grid.GetRow(button);
+            Mine getMine;
+            if (x - 1 >= 0)
             {
-                Game.MineField[x][y].flagged = false;
-                element.Content = " ";
+                getMine = Game.GetPoint(x - 1, y);
+                if (!getMine.explosive && !getMine.reaveled)
+                {
+                    RevealPoint(getMine, GetButton(x - 1, y));
+                    GetButton(x - 1, y).Background = Brushes.MediumAquamarine;
+                }
             }
-            else
+            if (y - 1 >= 0)
             {
-                Game.MineField[x][y].flagged = true;
-                element.Content = "F";
+                getMine = Game.GetPoint(x, y - 1);
+                if (!getMine.explosive && !getMine.reaveled)
+                {
+                    RevealPoint(getMine, GetButton(x, y - 1));
+                    GetButton(x, y - 1).Background = Brushes.MediumAquamarine;
+                }
+            }
+            if (y + 1 <= sizeY - 1)
+            {
+                getMine = Game.GetPoint(x, y + 1);
+                if (!getMine.explosive && !getMine.reaveled)
+                {
+                    
+                    RevealPoint(getMine, GetButton(x, y + 1));
+                    GetButton(x, y + 1).Background = Brushes.MediumAquamarine;
+                }
+            }
+            if (x + 1 <= sizeX - 1)
+            {
+                getMine = Game.GetPoint(x + 1, y);
+                if (!getMine.explosive && !getMine.reaveled)
+                {
+                    RevealPoint(getMine, GetButton(x + 1, y));
+                    GetButton(x + 1, y).Background = Brushes.MediumAquamarine;
+                }
             }
         }
+        public Button GetButton(int x, int y)
+        {
+            return MineGrid.Children.Cast<Button>().First(Button => Grid.GetRow(Button) == x && Grid.GetColumn(Button) == y);
+        }
+          
         public void RevealAll()
         {
-            Button uIElement;
+            Button button;
             for (int i = 0; i < 10; i++)
             {
                 for (int b = 0; b < 10; b++)
                 {
-                    uIElement = MineGrid.Children
+                    button = MineGrid.Children
                       .Cast<Button>()
                       .First(Button => Grid.GetRow(Button) == i && Grid.GetColumn(Button) == b);
                     if (!Game.MineField[i][b].explosive)
                     {
                         if (Game.MineField[i][b].number > 0)
                         {
-                            uIElement.Content = Game.MineField[i][b].number.ToString();
+                            button.Content = Game.MineField[i][b].number.ToString();
                         }
                     }
                     else
                     {
                         if (Game.MineField[i][b].flagged)
                         {
-                            uIElement.Content = "+";
+                            button.Content = "+";
                         }
-                        uIElement.Content = "x";
+                        button.Content = "x";
                     }
-                    uIElement.Foreground = setColor(Game.MineField[i][b].number);
-                    uIElement.Background = Brushes.White;
+                    button.Foreground = setColor(Game.MineField[i][b].number);
+                   // button.Background = Brushes.White;
                 }
             }
         }
@@ -147,14 +222,6 @@ namespace MineSweeper
                 default:
                     return (SolidColorBrush)(new BrushConverter().ConvertFrom("#000"));
             }
-        }
-        public void RightClick(int x, int y)
-        {
-            Game.Flag(x,y);
-        }
-        public void LeftClick(int x, int y)
-        {
-            
         }
     }
 }

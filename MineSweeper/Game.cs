@@ -11,13 +11,29 @@ namespace MineSweeper
     public class Game
     {
         public List<List<Mine>> MineField = new List<List<Mine>>();
-        public int MineCount = 30;
+        public int MineCount = 10;
         public int size = 10;
         public bool isGameOver = false;
-        
+        public bool generated = false;
         Random random = new Random();
-        public void GenerateMineField()
+        public Game()
         {
+            GenerateField();
+        }
+        public void GenerateField()
+        {
+            for (int x = 0; x < size; x++)
+            {
+                MineField.Add(new List<Mine>());
+                for (int y = 0; y < size; y++)
+                {
+                    MineField[x].Add(new Mine(false));
+                }
+            }
+        }
+        public void GenerateMineField(int SaveX, int SaveY)
+        {
+            generated = true;
             int counter = 0;
             for (int x = 0; x < size; x++)
             {
@@ -38,11 +54,14 @@ namespace MineSweeper
                     {
                         if (random.Next(0, 50) < 10)
                         {
-                            MineField[x][y].explosive = true;
-                            counter++;
-                            if (counter >= MineCount)
+                            if (SaveX != x && SaveY != y)
                             {
-                                break;
+                                MineField[x][y].explosive = true;
+                                counter++;
+                                if (counter >= MineCount)
+                                {
+                                    break;
+                                }
                             }
                         }
 
@@ -125,11 +144,14 @@ namespace MineSweeper
                     Counter++;
                 }
             }
-           
-            
+
+
             return Counter;
         }
-       
+        public Mine GetPoint(int x,int y)
+        {
+            return MineField[x][y];
+        }
         public void Flag(int x, int y)
         {
             Mine mine = MineField[x][y];
@@ -145,6 +167,7 @@ namespace MineSweeper
         public void GameOver()
         {
             isGameOver = true;
+            Debug.WriteLine("gay over");
         }
         public void DebugMineField()
         {
