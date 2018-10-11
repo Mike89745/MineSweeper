@@ -11,21 +11,41 @@ namespace MineSweeper
     public class Game
     {
         public List<List<Mine>> MineField = new List<List<Mine>>();
-        public int MineCount = 10;
-        public int size = 10;
-        public bool isGameOver = false;
+
+        public Difficulty difficulty = Difficulty.easy;
+
+        public int MineCount;
+        public int sizeX;
+        public int sizeY;
+
+        public bool GameOver = false;
+        public bool GameWon = false;
         public bool generated = false;
+
+        private int totalPoints;
+        public int RevealedPoints;
+
         Random random = new Random();
-        public Game()
+        public Game(int x, int y, Difficulty diff)
         {
+            difficulty = diff;
+            sizeX = x;
+            sizeY = y;
+            double xd = x * y / (int)difficulty;
+            if (xd < 1)
+            {
+                xd = 1;
+            }
+            MineCount = (int)Math.Round(xd);
+            totalPoints = x * y - MineCount;
             GenerateField();
         }
         public void GenerateField()
         {
-            for (int x = 0; x < size; x++)
+            for (int x = 0; x < sizeX; x++)
             {
                 MineField.Add(new List<Mine>());
-                for (int y = 0; y < size; y++)
+                for (int y = 0; y < sizeY; y++)
                 {
                     MineField[x].Add(new Mine(false));
                 }
@@ -35,19 +55,19 @@ namespace MineSweeper
         {
             generated = true;
             int counter = 0;
-            for (int x = 0; x < size; x++)
+
+            for (int x = 0; x < sizeX; x++)
             {
-                MineField.Add(new List<Mine>());
-                for (int y = 0; y < size; y++)
+                for (int y = 0; y < sizeY; y++)
                 {
-                    MineField[x].Add(new Mine(false));
+                    MineField[x][y] = new Mine(false);
                 }
             }
 
             while (counter < MineCount)
             {
-                int y = random.Next(0, size);
-                int x = random.Next(0, size);
+                int y = random.Next(0, sizeY);
+                int x = random.Next(0, sizeX);
                 if (counter < MineCount)
                 {
                     if (!MineField[x][y].explosive)
@@ -68,9 +88,9 @@ namespace MineSweeper
                     }
                 }
             }
-            for (int x = 0; x < size; x++)
+            for (int x = 0; x < sizeX; x++)
             {
-                for (int y = 0; y < size; y++)
+                for (int y = 0; y < sizeY; y++)
                 {
                     Mine mine = MineField[x][y];
                     if (!mine.explosive)
@@ -79,11 +99,7 @@ namespace MineSweeper
                     }
                 }
             }
-            DebugMineField();
-        }
-        public void Reveal(int x, int y)
-        {
-            MineField[x][y].reaveled = true;
+            DebugMineField(SaveX,SaveY);
         }
         public int SetPoint(int x, int y)
         {
@@ -109,35 +125,35 @@ namespace MineSweeper
                     Counter++;
                 }
             }
-            if (x + 1 <= size - 1 && y + 1 <= size - 1)
+            if (x + 1 <= sizeX - 1 && y + 1 <= sizeY - 1)
             {
                 if (MineField[x + 1][y + 1].explosive)
                 {
                     Counter++;
                 }
             }
-            if (y + 1 <= size - 1)
+            if (y + 1 <= sizeX - 1)
             {
                 if (MineField[x][y + 1].explosive)
                 {
                     Counter++;
                 }
             }
-            if (x + 1 <= size - 1)
+            if (x + 1 <= sizeX - 1)
             {
                 if (MineField[x + 1][y].explosive)
                 {
                     Counter++;
                 }
             }
-            if (x + 1 <= size - 1 && y - 1 >= 0)
+            if (x + 1 <= sizeX - 1 && y - 1 >= 0)
             {
                 if (MineField[x + 1][y - 1].explosive)
                 {
                     Counter++;
                 }
             }
-            if (x - 1 >= 0 && y + 1 <= size - 1)
+            if (x - 1 >= 0 && y + 1 <= sizeY - 1)
             {
                 if (MineField[x - 1][y + 1].explosive)
                 {
@@ -164,27 +180,50 @@ namespace MineSweeper
                 mine.flagged = true;
             }
         }
-        public void GameOver()
+        public void isGameOver()
         {
-            isGameOver = true;
-            Debug.WriteLine("gay over");
+            GameOver = true;
         }
-        public void DebugMineField()
+        public void isGameWon()
         {
-            string log = " ";
-            for (int i = 0; i < size; i++)
+            //Debug.WriteLine(RevealedPoints >= totalPoints);
+            if(RevealedPoints >= totalPoints)
             {
-                for (int b = 0; b < size; b++)
+                GameWon = true;
+            }
+        }
+        public void DebugMineField(int x,int y)
+        {
+            Debug.WriteLine(" ");
+            Debug.WriteLine(" ");
+            string log = " ";
+            for (int i = 0; i < sizeX; i++)
+            {
+                for (int b = 0; b < sizeY; b++)
                 {
-
-                    if (MineField[i][b].explosive)
+                    if(i == x && b == y)
                     {
-                        log += "[x] ";
+                        if (MineField[i][b].explosive)
+                        {
+                            log += "{x} ";
+                        }
+                        else
+                        {
+                            log += "{" + MineField[i][b].number + "} ";
+                        }
                     }
                     else
                     {
-                        log += "["+ MineField[i][b].number + "] ";
+                        if (MineField[i][b].explosive)
+                        {
+                            log += "[x] ";
+                        }
+                        else
+                        {
+                            log += "[" + MineField[i][b].number + "] ";
+                        }
                     }
+                    
                 }
                 Debug.WriteLine(log);
                 log = " ";

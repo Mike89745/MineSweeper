@@ -20,13 +20,45 @@
                 <ColumnDefinition Width="5*"></ColumnDefinition>
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0">Mines Left</Label>
-            <Label Grid.Column="2">Time</Label>
-            <Button Grid.Column="1" Margin="250,10,250,10">Reset</Button>
-            
+            <Label Grid.Column="0" x:Name="TotalMines" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Comic Sans MS" FontSize="36">Mines</Label>
+            <Label Grid.Column="2" x:Name="TimeLabel" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Comic Sans MS" FontSize="36">Time</Label>
+            <Button Grid.Column="1" Margin="250,10,250,10" x:Name="Reset" FontFamily="Comic Sans MS" FontSize="20">Reset</Button>
+
         </Grid>
         <Grid x:Name="MineGrid" Grid.Row="1" Margin="250,50,250,50">
-                
+
         </Grid>
+        <Label Visibility="Hidden" FontFamily="Comic Sans MS" FontSize="48" Margin="0,134,496,145" Grid.Row="1" x:Name="GameWonLabel">You Won!!</Label>
+        <Grid Grid.Row="1" x:Name="InputGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="2*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="2*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" TextWrapping="Wrap" Text="10" x:Name="InputX" FontFamily="Comic Sans MS" FontSize="22"/>
+                        <TextBox Grid.Column="1" TextWrapping="Wrap" Text="10" x:Name="InputY" FontFamily="Comic Sans MS" FontSize="22"/>
+                    </Grid>
+                    <Button Content="Start Game" Grid.Row="1" x:Name="StartGameButton"/>
+                </Grid>
+            </Grid>
+        </Grid>
+
+
     </Grid>
 </Window>

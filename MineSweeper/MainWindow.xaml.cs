@@ -21,16 +21,25 @@ namespace MineSweeper
     /// </summary>
     public partial class MainWindow : Window
     {
-        public Game Game = new Game();
-        public int sizeX = 10;
-        public int sizeY = 10;
+        public Game Game;
+        public int time;
+        public int sizeX;
+        public int sizeY;
         public MainWindow()
         {
             InitializeComponent();
+            StartGameButton.Click += StartGame;
+        }
+        private void StartGame(object sender, RoutedEventArgs e)
+        { 
+            sizeX = int.Parse(InputX.Text);
+            sizeY = int.Parse(InputY.Text);
+            Game = new Game(sizeX, sizeY, Difficulty.easy);
             GenerateGrid(sizeX, sizeY);
             Game.GenerateField();
+            InputGrid.Visibility = Visibility.Hidden;
+            Reset.Click += ResetGame;
         }
-
         public void GenerateGrid(int x, int y)
         {
             for (int i = 0; i < x; i++)
@@ -54,32 +63,49 @@ namespace MineSweeper
                     MineButton.MouseRightButtonUp += RightClick;
                 }
             }
+            TotalMines.Content = Game.MineCount.ToString();
         }
         private void LeftClick(object sender, RoutedEventArgs e)
         {
-            Button button = (Button)e.Source;
-            int x = Grid.GetColumn(button);
-            int y = Grid.GetRow(button);
-            if (!Game.generated)
+            if (!Game.GameOver || Game.GameWon)
             {
-                Game.GenerateMineField(x, y);
-                RevealAround(Game.MineField[x][y], button);
+                Button button = (Button)e.Source;
+                int y = Grid.GetColumn(button);
+                int x = Grid.GetRow(button);
+                if (!Game.generated)
+                {
+                    Game.GenerateMineField(x, y);
+                    RevealAround(Game.MineField[x][y], button);
+                }
+                // button.Background = Brushes.Yellow;
+                //  Debug.WriteLine(x + " " + y);
+                Game.DebugMineField(x, y);
+                RevealPoint(Game.MineField[x][y], button);
+                Game.isGameWon();
             }
-            button.Background = Brushes.Yellow;
-            Debug.WriteLine(x + " " + y);
-            Game.DebugMineField();
-            RevealPoint(Game.MineField[x][y], button);
+            if (Game.GameWon)
+            {
+                GameWonLabel.Visibility = Visibility.Visible;
+            }
         }
         private void RightClick(object sender, RoutedEventArgs e)
         {
-            Button button = (Button)e.Source;
-            int x = Grid.GetColumn(button);
-            int y = Grid.GetRow(button);
-            Flag(Game.MineField[x][y], button);
+            if (!Game.GameOver || Game.GameWon)
+            {
+                Button button = (Button)e.Source;
+                int y = Grid.GetColumn(button);
+                int x = Grid.GetRow(button);
+                Flag(Game.MineField[x][y], button);
+                Game.isGameWon();
+            }
+            if (Game.GameWon)
+            {
+                GameWonLabel.Visibility = Visibility.Visible;
+            }
         }
         public void Flag(Mine mine, Button button)
         {
-            if (mine.flagged)
+            if (mine.flagged && !mine.reaveled)
             {
                 mine.flagged = false;
                 button.Content = " ";
@@ -92,30 +118,34 @@ namespace MineSweeper
         }
         public void RevealPoint(Mine mine, Button button)
         {
-            Debug.WriteLine(mine.explosive + " " + mine.flagged + " " + mine.number + " " + mine.reaveled);
+           /* Debug.WriteLine("Explosive:" + mine.explosive);
+            Debug.WriteLine("Revealed:" + mine.reaveled);
+            Debug.WriteLine("Number:" + mine.number);
+            Debug.WriteLine("Flagged:" + mine.flagged);*/
             if (!mine.explosive)
             {
                 if (!mine.reaveled)
                 {
                     mine.reaveled = true;
+                    Game.RevealedPoints++;
                     if (mine.number > 0)
                     {
                         button.Content = mine.number.ToString();
-                      //  button.Background = Brushes.White;
+                        button.Background = Brushes.White;
                     }
                     else
                     {
-                       // button.Background = Brushes.White;
+                        button.Background = Brushes.White;
                         RevealAround(mine, button);
                     }
                 }
             }
             else
             {
-                Game.GameOver();
+                Game.isGameOver();
                 RevealAll();
                 button.Content = "x";
-                //button.Background = Brushes.Red;
+                button.Background = Brushes.Red;
             }
             button.Foreground = setColor(mine.number);
         }
@@ -130,7 +160,7 @@ namespace MineSweeper
                 if (!getMine.explosive && !getMine.reaveled)
                 {
                     RevealPoint(getMine, GetButton(x - 1, y));
-                    GetButton(x - 1, y).Background = Brushes.MediumAquamarine;
+                 //   GetButton(x - 1, y).Background = Brushes.MediumAquamarine;
                 }
             }
             if (y - 1 >= 0)
@@ -139,7 +169,7 @@ namespace MineSweeper
                 if (!getMine.explosive && !getMine.reaveled)
                 {
                     RevealPoint(getMine, GetButton(x, y - 1));
-                    GetButton(x, y - 1).Background = Brushes.MediumAquamarine;
+                 //   GetButton(x, y - 1).Background = Brushes.MediumAquamarine;
                 }
             }
             if (y + 1 <= sizeY - 1)
@@ -149,7 +179,7 @@ namespace MineSweeper
                 {
                     
                     RevealPoint(getMine, GetButton(x, y + 1));
-                    GetButton(x, y + 1).Background = Brushes.MediumAquamarine;
+                  //  GetButton(x, y + 1).Background = Brushes.MediumAquamarine;
                 }
             }
             if (x + 1 <= sizeX - 1)
@@ -158,7 +188,7 @@ namespace MineSweeper
                 if (!getMine.explosive && !getMine.reaveled)
                 {
                     RevealPoint(getMine, GetButton(x + 1, y));
-                    GetButton(x + 1, y).Background = Brushes.MediumAquamarine;
+                   // GetButton(x + 1, y).Background = Brushes.MediumAquamarine;
                 }
             }
         }
@@ -166,7 +196,7 @@ namespace MineSweeper
         {
             return MineGrid.Children.Cast<Button>().First(Button => Grid.GetRow(Button) == x && Grid.GetColumn(Button) == y);
         }
-          
+       
         public void RevealAll()
         {
             Button button;
@@ -193,9 +223,29 @@ namespace MineSweeper
                         button.Content = "x";
                     }
                     button.Foreground = setColor(Game.MineField[i][b].number);
-                   // button.Background = Brushes.White;
+                    button.Background = Brushes.White;
                 }
             }
+        }
+        public void ResetGame(object sender, RoutedEventArgs e)
+        {
+            Button button;
+            for (int i = 0; i < 10; i++)
+            {
+                for (int b = 0; b < 10; b++)
+                {
+                    button = MineGrid.Children
+                      .Cast<Button>()
+                      .First(Button => Grid.GetRow(Button) == i && Grid.GetColumn(Button) == b);
+                    button.Content = "";
+                    button.Background = Brushes.LightGray;
+                }
+            }
+            Game.generated = false;
+            Game.GameOver = false;
+            Game.GameWon = false;
+            Game.RevealedPoints = 0;
+            GameWonLabel.Visibility = Visibility.Hidden;
         }
         public SolidColorBrush setColor(int number)
         {
